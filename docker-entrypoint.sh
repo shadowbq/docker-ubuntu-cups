@@ -45,11 +45,21 @@ fi
 # Start D-Bus for Avahi communication
 echo "Starting D-Bus daemon..."
 mkdir -p /var/run/dbus
+# Generate machine ID if it doesn't exist
+if [ ! -f /var/lib/dbus/machine-id ]; then
+    dbus-uuidgen > /var/lib/dbus/machine-id
+fi
 dbus-daemon --system --fork
+
+# Wait a moment for D-Bus to initialize
+sleep 2
 
 # Start Avahi daemon for AirPrint/mDNS support
 echo "Starting Avahi daemon for AirPrint support..."
 avahi-daemon --daemonize --no-chroot
+
+# Wait a moment for Avahi to initialize
+sleep 2
 
 # Start CUPS in foreground
 echo "Starting CUPS server..."
