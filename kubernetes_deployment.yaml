@@ -89,6 +89,8 @@ spec:
       labels:
         app: cups
     spec:
+      hostNetwork: true  # Use node IP (192.168.86.x) for proper mDNS discovery
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         fsGroup: 0 # Set filesystem group ownership to root
         runAsNonRoot: false  # CUPS requires root privileges
@@ -174,6 +176,8 @@ spec:
           capabilities:
             add:
             - NET_BIND_SERVICE
+            - NET_ADMIN
+            - NET_RAW
             - CHOWN
             - DAC_OVERRIDE
             - FOWNER
@@ -227,7 +231,7 @@ metadata:
 spec:
   selector:
     app: cups
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - name: cups
     port: 631
@@ -236,4 +240,5 @@ spec:
   - name: filebrowser
     port: 8080
     targetPort: 80
+    protocol: TCP
     protocol: TCP

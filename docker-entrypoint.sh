@@ -42,6 +42,10 @@ if [[ ${1:-} == /* ]]; then
     exec "$@"
 fi
 
+# Start Avahi daemon for AirPrint/mDNS support
+echo "Starting Avahi daemon for AirPrint support..."
+avahi-daemon --daemonize --no-chroot
+
 # Start CUPS in foreground
 echo "Starting CUPS server..."
 exec cupsd -f "$@"

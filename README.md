@@ -7,8 +7,9 @@ Docker image for CUPS server with a CUPS-PDF virtual printer.
 ## What's New in v2.0
 
 - **Updated to Ubuntu 24.04 LTS (Noble)**
+- **Added AirPrint support** for iOS/macOS device discovery via mDNS/Bonjour
 - **Added Docker Compose support** for easy deployment
-- **Added Kubernetes deployment manifests**
+- **Added Kubernetes deployment manifests** with Longhorn storage and FileBrowser
 - **Improved health checks** for better container orchestration
 - **Enhanced security** with proper capabilities and permissions
 - **Better logging** and error handling in entrypoint script
@@ -159,6 +160,30 @@ Once running, access the CUPS web interface at:
 - <http://localhost:631>
 
 Login with the admin credentials you configured.
+
+## AirPrint Support
+
+This CUPS server includes AirPrint support for seamless printing from iOS and macOS devices:
+
+### **Features:**
+- **Automatic Discovery**: iOS/macOS devices will automatically discover the PDF printer
+- **No Driver Installation**: Works with built-in AirPrint drivers
+- **Secure Printing**: Uses CUPS authentication when configured
+
+### **How to Use:**
+1. **Ensure the CUPS server is running** on your network
+2. **On iOS**: Open any app → Share → Print → Select "PDF" printer
+3. **On macOS**: File → Print → Select "PDF" printer from the list
+
+### **Network Requirements:**
+- **mDNS/Bonjour**: The server advertises itself via multicast DNS
+- **Port 631**: Must be accessible from client devices
+- **Same Network**: Devices should be on the same local network for discovery
+
+### **Troubleshooting AirPrint:**
+- Verify the printer appears in iOS Settings → Printers & Scanners
+- Check CUPS web interface shows "PDF" printer as enabled
+- Ensure no firewall is blocking mDNS (port 5353) or CUPS (port 631)
 
 ## Building the Image
 

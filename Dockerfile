@@ -9,12 +9,14 @@ LABEL version="2.0"
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install CUPS and PDF printer driver
+# Install CUPS, PDF printer driver, and AirPrint support
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
         cups \
         cups-pdf \
         printer-driver-cups-pdf \
+        avahi-daemon \
+        avahi-utils \
         ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -37,8 +39,9 @@ RUN echo "LogLevel warn" > /etc/cups/cupsd.conf && \
     lpadmin -p PDF -v cups-pdf:/ -m lsb/usr/cups-pdf/CUPS-PDF_opt.ppd -E && \
     while kill "$pid" 2>/dev/null; do sleep 1; done
 
-# Copy final CUPS configuration files
+# Copy CUPS and Avahi configuration files
 COPY cupsd.conf cups-files.conf /etc/cups/
+COPY avahi-daemon.conf /etc/avahi/
 
 # Copy and setup entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
