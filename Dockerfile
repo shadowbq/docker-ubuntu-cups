@@ -42,6 +42,7 @@ RUN echo "LogLevel warn" > /etc/cups/cupsd.conf && \
 # Copy CUPS and Avahi configuration files
 COPY cupsd.conf cups-files.conf /etc/cups/
 COPY avahi-daemon.conf /etc/avahi/
+COPY cups-pdf.service /etc/avahi/services/
 
 # Copy and setup entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
