@@ -15,10 +15,13 @@ Docker image for CUPS server with a CUPS-PDF virtual printer.
 
 ## Quick Start
 
-> **Note:** This image is hosted on GitHub Container Registry. For private repositories, you may need to authenticate:
-> ```bash
-> echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
-> ```
+Note: Github Workflows are used to build and push the Docker image to GitHub Container Registry. 
+
+You can pull the latest image directly:
+
+```bash
+docker pull ghcr.io/shadowbq/docker-ubuntu-cups:latest
+```
 
 ### Using Docker Run
 
@@ -33,7 +36,10 @@ docker run -d \
 
 ### Using Docker Compose
 
+**For local development and simple deployments:**
+
 1. Copy the environment file:
+
 ```bash
 cp .sample.env .env
 ```
@@ -41,43 +47,75 @@ cp .sample.env .env
 2. Edit `.env` and set your admin password
 
 3. Start the service:
+
 ```bash
 docker-compose up -d
 ```
 
 4. View logs:
+
 ```bash
 docker-compose logs -f
 ```
 
 5. Stop the service:
+
 ```bash
 docker-compose down
 ```
 
 ### Using Kubernetes
 
-1. Update the admin credentials in `kubernetes-deployment.yaml`
+**For production deployments with advanced features:**
 
-2. Deploy to your cluster:
-```bash
-kubectl apply -f kubernetes-deployment.yaml
+The Kubernetes deployment includes:
+
+- **Longhorn persistent storage** for PDF files
+- **FileBrowser sidecar** for web-based PDF file management  
+- **LoadBalancer service** with MetalLB integration
+- **Secrets and ConfigMaps** for secure configuration management
+- **Init containers** for proper directory setup
+
+1. Update the admin credentials in the Secret within `kubernetes_deployment.yaml`:
+
+```yaml
+stringData:
+  username: admin
+  password: YOUR_SECURE_PASSWORD_HERE
 ```
 
-3. Check the deployment status:
+2. Adjust the LoadBalancer IP for your network in the Service:
+
+```yaml
+annotations:
+  metallb.universe.tf/loadBalancer-IPs: "192.168.87.23" # Change this IP
+```
+
+or remove the annotation to get a dynamic IP.
+
+3. Deploy to your cluster:
+
+```bash
+kubectl apply -f kubernetes_deployment.yaml
+```
+
+4. Check the deployment status:
+
 ```bash
 kubectl get pods -n cups
-kubectl logs -n cups -l app=cups
+kubectl get pvc -n cups
+kubectl get svc -n cups
 ```
 
-4. Port forward to access the web interface:
-```bash
-kubectl port-forward -n cups svc/cups-service 631:631
-```
+5. Access the services:
+   - **CUPS Web Interface**: `http://192.168.87.23:631` (use your LoadBalancer IP)
+   - **PDF File Browser**: `http://192.168.87.23:8080` (FileBrowser interface)
 
 ## Configuration
 
 ### Environment Variables
+
+> **Note:** Kubernetes deployment does **not** use `.env` files. Configuration is managed through Kubernetes Secrets and ConfigMaps.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -117,7 +155,8 @@ docker run -d \
 ## Accessing the Web Interface
 
 Once running, access the CUPS web interface at:
-- http://localhost:631
+
+- <http://localhost:631>
 
 Login with the admin credentials you configured.
 
@@ -146,16 +185,19 @@ docker inspect --format='{{.State.Health.Status}}' cups-server
 ## Troubleshooting
 
 ### View CUPS logs
+
 ```bash
 docker exec cups-server tail -f /var/log/cups/error_log
 ```
 
 ### Check CUPS status
+
 ```bash
 docker exec cups-server lpstat -r
 ```
 
 ### List available printers
+
 ```bash
 docker exec cups-server lpstat -p -d
 ```

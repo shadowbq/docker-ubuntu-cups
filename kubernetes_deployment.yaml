@@ -31,16 +31,43 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: cups-pdf-output
+  name: cups-pdf-output-pvc
+  namespace: cups
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: filebrowser-database-pvc
   namespace: cups
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: longhorn
   resources:
     requests:
-      storage: 10Gi
-  # Optional: Specify storage class
-  # storageClassName: standard
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: filebrowser-config-pvc
+  namespace: cups
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
 
 ---
 apiVersion: apps/v1
@@ -63,8 +90,25 @@ spec:
         app: cups
     spec:
       securityContext:
-        fsGroup: 7
+        fsGroup: 0 # Set filesystem group ownership to root (for initContainer chmod)
         runAsNonRoot: false  # CUPS requires root privileges
+      
+      initContainers:
+        - name: setup-filebrowser-dirs
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Creating filebrowser directory structure..."
+              mkdir -p /srv/pdfs
+              chmod 755 /srv /srv/pdfs
+              echo "Setting up PDF output directory..."
+              mkdir -p /var/spool/cups-pdf/ANONYMOUS
+              chmod 1777 /var/spool/cups-pdf/ANONYMOUS
+              echo "Directory structure ready"
+          volumeMounts:
+            - name: pdf-output
+              mountPath: /srv/pdfs
       
       containers:
       - name: cups
@@ -134,10 +178,39 @@ spec:
             - ALL
           readOnlyRootFilesystem: false
       
+      - name: filebrowser
+        image: filebrowser/filebrowser:latest
+        ports:
+          - containerPort: 80
+        args: ["-r", "/srv"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+              - CHOWN
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000 # Run as filebrowser user
+          runAsGroup: 1000
+        volumeMounts:
+          - name: pdf-output
+            mountPath: /srv/pdfs
+          - name: filebrowser-database
+            mountPath: /database
+          - name: filebrowser-config
+            mountPath: /config
+      
       volumes:
       - name: pdf-output
         persistentVolumeClaim:
-          claimName: cups-pdf-output
+          claimName: cups-pdf-output-pvc
+      - name: filebrowser-database
+        persistentVolumeClaim:
+          claimName: filebrowser-database-pvc
+      - name: filebrowser-config
+        persistentVolumeClaim:
+          claimName: filebrowser-config-pvc
 
 ---
 apiVersion: v1
@@ -148,40 +221,15 @@ metadata:
   labels:
     app: cups
 spec:
-  type: ClusterIP
-  ports:
-  - port: 631
-    targetPort: 631
-    protocol: TCP
-    name: cups
   selector:
     app: cups
-
----
-# Optional: Ingress for web interface access
-# Uncomment and configure based on your ingress controller
-# apiVersion: networking.k8s.io/v1
-# kind: Ingress
-# metadata:
-#   name: cups-ingress
-#   namespace: cups
-#   annotations:
-#     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-# spec:
-#   ingressClassName: nginx
-#   rules:
-#   - host: cups.example.com
-#     http:
-#       paths:
-#       - path: /
-#         pathType: Prefix
-#         backend:
-#           service:
-#             name: cups-service
-#             port:
-#               number: 631
-#   # Optional: TLS configuration
-#   # tls:
-#   # - hosts:
-#   #   - cups.example.com
-#   #   secretName: cups-tls
+  type: LoadBalancer
+  ports:
+  - name: cups
+    port: 631
+    targetPort: 631
+    protocol: TCP
+  - name: filebrowser
+    port: 8080
+    targetPort: 80
+    protocol: TCP
