@@ -1,25 +1,25 @@
-version: '3.8'
+version: "3.8"
 
 services:
   cups:
     build:
       context: .
       dockerfile: Dockerfile
-    image: docker-ubuntu-cups:latest
+    image: ghcr.io/shadowbq/docker-ubuntu-cups:latest
     container_name: cups-server
     restart: unless-stopped
-    
+
     environment:
       # REQUIRED: Set admin password
       - CUPS_ADMIN_PASSWORD=${CUPS_ADMIN_PASSWORD}
       # OPTIONAL: Override defaults
       - CUPS_ADMIN_USERNAME=${CUPS_ADMIN_USERNAME:-admin}
       - CUPS_LOG_LEVEL=${CUPS_LOG_LEVEL:-warn}
-    
+
     ports:
       # CUPS web interface and printing
       - "631:631"
-    
+
     volumes:
       # Persistent PDF output
       - cups-pdf-output:/var/spool/cups-pdf/ANONYMOUS
@@ -28,28 +28,28 @@ services:
       # Optional: Custom CUPS configuration
       # - ./cupsd.conf:/etc/cups/cupsd.conf:ro
       # - ./cups-files.conf:/etc/cups/cups-files.conf:ro
-    
+
     networks:
       - cups-network
-    
+
     healthcheck:
       test: ["CMD", "lpstat", "-r"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
-    
+
     security_opt:
       - no-new-privileges:true
-    
+
     # Optional: Resource limits
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
 
 volumes:

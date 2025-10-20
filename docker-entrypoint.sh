@@ -21,6 +21,11 @@ fi
 # Configure log level
 sed -i /etc/cups/cupsd.conf -e "s|^LogLevel .*$|LogLevel $CUPS_LOG_LEVEL|"
 
+# Ensure proper permissions for CUPS 2.4+
+mkdir -p /var/run/cups /var/spool/cups /var/cache/cups
+chown -R root:lp /var/run/cups /var/spool/cups /var/cache/cups
+chmod -R 755 /var/run/cups /var/spool/cups /var/cache/cups
+
 # Ensure PDF output directory has proper permissions
 chmod 1777 /var/spool/cups-pdf/ANONYMOUS
 

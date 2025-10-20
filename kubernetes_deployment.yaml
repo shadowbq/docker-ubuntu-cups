@@ -68,7 +68,7 @@ spec:
       
       containers:
       - name: cups
-        image: shadowbq/docker-ubuntu-cups:latest
+        image: ghcr.io/shadowbq/docker-ubuntu-cups:latest
         imagePullPolicy: IfNotPresent
         
         env:

@@ -2,6 +2,8 @@
 
 Docker image for CUPS server with a CUPS-PDF virtual printer.
 
+**Image available on GitHub Container Registry:** `ghcr.io/shadowbq/docker-ubuntu-cups`
+
 ## What's New in v2.0
 
 - **Updated to Ubuntu 24.04 LTS (Noble)**
@@ -13,6 +15,11 @@ Docker image for CUPS server with a CUPS-PDF virtual printer.
 
 ## Quick Start
 
+> **Note:** This image is hosted on GitHub Container Registry. For private repositories, you may need to authenticate:
+> ```bash
+> echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+> ```
+
 ### Using Docker Run
 
 ```bash
@@ -21,7 +28,7 @@ docker run -d \
   -p 631:631 \
   -e CUPS_ADMIN_PASSWORD=mysecurepassword \
   -v cups-pdf:/var/spool/cups-pdf/ANONYMOUS \
-  shadowbq/docker-ubuntu-cups:latest
+  ghcr.io/shadowbq/docker-ubuntu-cups:latest
 ```
 
 ### Using Docker Compose

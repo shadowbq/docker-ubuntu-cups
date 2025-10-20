@@ -1,4 +1,5 @@
 # Modern CUPS Server with PDF printer
+# Published to GitHub Container Registry: ghcr.io/shadowbq/docker-ubuntu-cups
 FROM ubuntu:24.04
 
 LABEL maintainer="shadowbq@gmail.com"
@@ -18,14 +19,26 @@ RUN apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy CUPS configuration files
-COPY cupsd.conf cups-files.conf /etc/cups/
+# Setup CUPS directories and permissions for version 2.4+
+RUN mkdir -p /var/run/cups /var/spool/cups /var/cache/cups && \
+    chown -R root:lp /etc/cups /var/run/cups /var/spool/cups /var/cache/cups && \
+    chmod -R 755 /etc/cups && \
+    chmod -R 710 /var/run/cups /var/spool/cups /var/cache/cups
 
-# Configure the PDF printer
-RUN cupsd -f & pid=$! && \
+# Configure the PDF printer with temporary unrestricted config
+RUN echo "LogLevel warn" > /etc/cups/cupsd.conf && \
+    echo "Listen /run/cups/cups.sock" >> /etc/cups/cupsd.conf && \
+    echo "<Location />" >> /etc/cups/cupsd.conf && \
+    echo "  Order allow,deny" >> /etc/cups/cupsd.conf && \
+    echo "  Allow all" >> /etc/cups/cupsd.conf && \
+    echo "</Location>" >> /etc/cups/cupsd.conf && \
+    cupsd -f & pid=$! && \
     while test ! -S /run/cups/cups.sock; do sleep 1; done && \
     lpadmin -p PDF -v cups-pdf:/ -m lsb/usr/cups-pdf/CUPS-PDF_opt.ppd -E && \
     while kill "$pid" 2>/dev/null; do sleep 1; done
+
+# Copy final CUPS configuration files
+COPY cupsd.conf cups-files.conf /etc/cups/
 
 # Copy and setup entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
