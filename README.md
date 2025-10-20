@@ -1,10 +1,10 @@
-# Docker CUPS Server
+# Docker CUPS toPDF IPP & AirPrint Server
 
 Docker image for CUPS server with a CUPS-PDF virtual printer.
 
 **Image available on GitHub Container Registry:** `ghcr.io/shadowbq/docker-ubuntu-cups`
 
-## What's New in v2.0
+## What's New in v2.5
 
 - **Updated to Ubuntu 24.04 LTS (Noble)**
 - **Added AirPrint support** for iOS/macOS device discovery via mDNS/Bonjour
@@ -16,7 +16,7 @@ Docker image for CUPS server with a CUPS-PDF virtual printer.
 
 ## Quick Start
 
-Note: Github Workflows are used to build and push the Docker image to GitHub Container Registry. 
+Note: Github Workflows are used to build and push the Docker image to GitHub Container Registry.
 
 You can pull the latest image directly:
 
@@ -161,29 +161,115 @@ Once running, access the CUPS web interface at:
 
 Login with the admin credentials you configured.
 
-## AirPrint Support
+## FileBrowser Integration
 
-This CUPS server includes AirPrint support for seamless printing from iOS and macOS devices:
+The Kubernetes deployment includes FileBrowser for easy access to generated PDF files. When deploying via Kubernetes, access FileBrowser at port 8080 to browse and download all printed documents. On first startup, check the FileBrowser container logs to find the initial admin password: `kubectl logs -n cups -l app=cups -c filebrowser`. This web interface provides the primary access point to retrieve PDF files created by the virtual printer.
 
-### **Features:**
-- **Automatic Discovery**: iOS/macOS devices will automatically discover the PDF printer
-- **No Driver Installation**: Works with built-in AirPrint drivers
-- **Secure Printing**: Uses CUPS authentication when configured
+## IPP & AirPrint Support
+
+This CUPS server provides comprehensive Internet Printing Protocol (IPP) support with AirPrint compatibility for seamless printing from modern devices:
+
+### **IPP (Internet Printing Protocol) Features:**
+
+- **IPP/2.1 Compliant**: Supports the latest IPP standards
+- **IPP Everywhere**: Universal printing without proprietary drivers
+- **Secure Communication**: TLS encryption support for sensitive documents
+- **Network Discovery**: Automatic printer discovery via DNS-SD/mDNS
+- **Job Management**: Complete print job status and control
+- **PDF Virtual Printer**: Converts any print job to PDF format
+
+### **AirPrint Capabilities:**
+
+- **iOS/iPadOS Support**: Native printing from iPhone and iPad
+- **macOS Integration**: Seamless printing from Mac applications
+- **Automatic Discovery**: Zero-configuration printer setup
+- **No Driver Installation**: Works with built-in system drivers
+- **Wi-Fi Printing**: Print over wireless networks
+- **Document Preview**: Print preview and page range selection
+
+### **Supported Client Platforms:**
+
+| Platform | Method | Requirements |
+|----------|--------|--------------|
+| **iOS/iPadOS** | AirPrint | iOS 4.2+ |
+| **macOS** | AirPrint/IPP | macOS 10.7+ |
+| **Windows** | IPP Driver | Windows 10+ |
+| **Linux** | CUPS/IPP | Any distribution |
+| **Chrome OS** | IPP | Built-in support |
+| **Android** | Mopria/IPP | Android 8.0+ |
 
 ### **How to Use:**
-1. **Ensure the CUPS server is running** on your network
-2. **On iOS**: Open any app → Share → Print → Select "PDF" printer
-3. **On macOS**: File → Print → Select "PDF" printer from the list
+
+#### **iOS/iPadOS:**
+
+1. Open any app (Safari, Mail, Photos, etc.)
+2. Tap **Share** → **Print**
+3. Select **"PDF"** printer from the list
+4. Configure options and tap **Print**
+
+#### **macOS:**
+
+1. Open any application
+2. **File** → **Print** (⌘+P)
+3. Select **"PDF"** from printer dropdown
+4. Click **Print**
+
+#### **Windows 10/11:**
+
+1. **Settings** → **Printers & scanners**
+2. **Add printer or scanner**
+3. Select **"PDF"** when discovered
+4. Use normally through any application
+
+#### **Linux (CUPS):**
+
+```bash
+# Add printer manually if not auto-discovered
+lpadmin -p PDF -v ipp://CUPS_SERVER_IP:631/printers/PDF -m everywhere
+```
 
 ### **Network Requirements:**
-- **mDNS/Bonjour**: The server advertises itself via multicast DNS
-- **Port 631**: Must be accessible from client devices
-- **Same Network**: Devices should be on the same local network for discovery
 
-### **Troubleshooting AirPrint:**
-- Verify the printer appears in iOS Settings → Printers & Scanners
-- Check CUPS web interface shows "PDF" printer as enabled
-- Ensure no firewall is blocking mDNS (port 5353) or CUPS (port 631)
+- **Port 631/tcp**: IPP communication (HTTP/HTTPS)
+- **Port 5353/udp**: mDNS/Bonjour discovery
+- **Same Network Segment**: For automatic discovery
+- **Multicast Support**: Network must allow mDNS packets
+
+### **Access Methods:**
+
+| Method | URL Format | Use Case |
+|--------|------------|----------|
+| **Web Interface** | `http://SERVER_IP:631` | Administration |
+| **IPP Direct** | `ipp://SERVER_IP:631/printers/PDF` | Manual setup |
+| **AirPrint** | Auto-discovered | iOS/macOS |
+| **FileBrowser** | `http://SERVER_IP:8080` | PDF access |
+
+### **Troubleshooting:**
+
+#### **Discovery Issues:**
+
+- Verify mDNS is working: `avahi-browse -at` (Linux/macOS)
+- Check firewall allows ports 631 and 5353
+- Ensure devices are on same network segment
+
+#### **Printing Problems:**
+
+- Check CUPS error logs: `kubectl logs -n cups -l app=cups -c cups`
+- Verify printer status in web interface
+- Test with simple text document first
+
+#### **Network Debugging:**
+
+```bash
+# Test IPP connectivity
+ipptool ipp://SERVER_IP:631/printers/PDF get-printer-attributes.test
+
+# Check mDNS registration
+avahi-browse -r _ipp._tcp
+
+# Verify CUPS is listening
+nmap -p 631 SERVER_IP
+```
 
 ## Building the Image
 

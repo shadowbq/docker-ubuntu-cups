@@ -4,7 +4,7 @@ FROM ubuntu:24.04
 
 LABEL maintainer="shadowbq@gmail.com"
 LABEL description="CUPS server with CUPS-PDF virtual printer"
-LABEL version="2.0"
+LABEL version="2.5"
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
