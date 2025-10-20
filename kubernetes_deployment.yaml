@@ -1,0 +1,187 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cups
+  labels:
+    name: cups
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cups-admin-credentials
+  namespace: cups
+type: Opaque
+stringData:
+  # IMPORTANT: Change these values before deploying
+  username: admin
+  password: changeme123
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cups-config
+  namespace: cups
+data:
+  CUPS_LOG_LEVEL: "warn"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cups-pdf-output
+  namespace: cups
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Optional: Specify storage class
+  # storageClassName: standard
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cups-server
+  namespace: cups
+  labels:
+    app: cups
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cups
+  template:
+    metadata:
+      labels:
+        app: cups
+    spec:
+      securityContext:
+        fsGroup: 7
+        runAsNonRoot: false  # CUPS requires root privileges
+      
+      containers:
+      - name: cups
+        image: shadowbq/docker-ubuntu-cups:latest
+        imagePullPolicy: IfNotPresent
+        
+        env:
+        - name: CUPS_ADMIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: cups-admin-credentials
+              key: username
+        - name: CUPS_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cups-admin-credentials
+              key: password
+        - name: CUPS_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: cups-config
+              key: CUPS_LOG_LEVEL
+        
+        ports:
+        - name: cups
+          containerPort: 631
+          protocol: TCP
+        
+        volumeMounts:
+        - name: pdf-output
+          mountPath: /var/spool/cups-pdf/ANONYMOUS
+        
+        livenessProbe:
+          exec:
+            command:
+            - lpstat
+            - "-r"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - lpstat
+            - "-r"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+      
+      volumes:
+      - name: pdf-output
+        persistentVolumeClaim:
+          claimName: cups-pdf-output
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cups-service
+  namespace: cups
+  labels:
+    app: cups
+spec:
+  type: ClusterIP
+  ports:
+  - port: 631
+    targetPort: 631
+    protocol: TCP
+    name: cups
+  selector:
+    app: cups
+
+---
+# Optional: Ingress for web interface access
+# Uncomment and configure based on your ingress controller
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: cups-ingress
+#   namespace: cups
+#   annotations:
+#     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: cups.example.com
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: cups-service
+#             port:
+#               number: 631
+#   # Optional: TLS configuration
+#   # tls:
+#   # - hosts:
+#   #   - cups.example.com
+#   #   secretName: cups-tls
