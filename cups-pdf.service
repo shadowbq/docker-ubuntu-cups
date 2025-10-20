@@ -1,4 +1,4 @@
-<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<?xml version="1.0" standalone="no"?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
   <name replace-wildcards="yes">CUPS-PDF @ %h</name>
@@ -9,55 +9,13 @@
     <txt-record>txtvers=1</txt-record>
     <txt-record>qtotal=1</txt-record>
     <txt-record>rp=printers/PDF</txt-record>
-    <txt-record>ty=Generic PDF Printer</txt-record>
-    <txt-record>adminurl=http://192.168.87.27:631/</txt-record>
+    <txt-record>ty=CUPS-PDF Virtual Printer</txt-record>
     <txt-record>note=PDF Virtual Printer</txt-record>
-    <txt-record>priority=0</txt-record>
     <txt-record>product=(CUPS-PDF)</txt-record>
-    <txt-record>printer-state=3</txt-record>
-    <txt-record>printer-type=0x901046</txt-record>
-    <txt-record>Transparent=T</txt-record>
-    <txt-record>Binary=T</txt-record>
-    <txt-record>Fax=F</txt-record>
     <txt-record>Color=T</txt-record>
     <txt-record>Duplex=F</txt-record>
-    <txt-record>Staple=F</txt-record>
     <txt-record>Copies=T</txt-record>
-    <txt-record>Collate=F</txt-record>
-    <txt-record>Punch=F</txt-record>
-    <txt-record>Bind=F</txt-record>
-    <txt-record>Sort=T</txt-record>
-    <txt-record>Scan=F</txt-record>
-    <txt-record>pdl=application/pdf,application/postscript,application/vnd.cups-postscript,application/vnd.cups-pdf,image/gif,image/png,image/jpeg,text/plain,text/html</txt-record>
-    <txt-record>URF=W8,SRGB24,CP1,RS600</txt-record>
-  </service>
-  <service protocol="ipv6">
-    <type>_ipp._tcp</type>
-    <subtype>_universal._sub._ipp._tcp</subtype>
-    <port>631</port>
-    <txt-record>txtvers=1</txt-record>
-    <txt-record>qtotal=1</txt-record>
-    <txt-record>rp=printers/PDF</txt-record>
-    <txt-record>ty=Generic PDF Printer</txt-record>
-    <txt-record>adminurl=http://192.168.87.27:631/</txt-record>
-    <txt-record>note=PDF Virtual Printer</txt-record>
-    <txt-record>priority=0</txt-record>
-    <txt-record>product=(CUPS-PDF)</txt-record>
-    <txt-record>printer-state=3</txt-record>
-    <txt-record>printer-type=0x901046</txt-record>
-    <txt-record>Transparent=T</txt-record>
-    <txt-record>Binary=T</txt-record>
-    <txt-record>Fax=F</txt-record>
-    <txt-record>Color=T</txt-record>
-    <txt-record>Duplex=F</txt-record>
-    <txt-record>Staple=F</txt-record>
-    <txt-record>Copies=T</txt-record>
-    <txt-record>Collate=F</txt-record>
-    <txt-record>Punch=F</txt-record>
-    <txt-record>Bind=F</txt-record>
-    <txt-record>Sort=T</txt-record>
-    <txt-record>Scan=F</txt-record>
-    <txt-record>pdl=application/pdf,application/postscript,application/vnd.cups-postscript,application/vnd.cups-pdf,image/gif,image/png,image/jpeg,text/plain,text/html</txt-record>
+    <txt-record>pdl=application/pdf,application/postscript,application/vnd.cups-pdf,image/jpeg,image/png,text/plain</txt-record>
     <txt-record>URF=W8,SRGB24,CP1,RS600</txt-record>
   </service>
 </service-group>
