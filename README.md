@@ -28,7 +28,7 @@ docker run -d \
 
 1. Copy the environment file:
 ```bash
-cp .env.example .env
+cp .sample.env .env
 ```
 
 2. Edit `.env` and set your admin password
