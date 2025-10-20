@@ -45,7 +45,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: filebrowser-database-pvc
+  name: filebrowser-cups-database-pvc
   namespace: cups
 spec:
   accessModes:
@@ -59,7 +59,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: filebrowser-config-pvc
+  name: filebrowser-cups-config-pvc
   namespace: cups
 spec:
   accessModes:
@@ -90,7 +90,7 @@ spec:
         app: cups
     spec:
       securityContext:
-        fsGroup: 0 # Set filesystem group ownership to root (for initContainer chmod)
+        fsGroup: 0 # Set filesystem group ownership to root
         runAsNonRoot: false  # CUPS requires root privileges
       
       initContainers:
@@ -170,13 +170,17 @@ spec:
             cpu: "1000m"
         
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
           capabilities:
             add:
             - NET_BIND_SERVICE
-            drop:
-            - ALL
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            drop: []
+          privileged: false
           readOnlyRootFilesystem: false
+          runAsUser: 0  # Run as root - required for CUPS and user management
       
       - name: filebrowser
         image: filebrowser/filebrowser:latest
@@ -196,21 +200,21 @@ spec:
         volumeMounts:
           - name: pdf-output
             mountPath: /srv/pdfs
-          - name: filebrowser-database
+          - name: filebrowser-cups-database
             mountPath: /database
-          - name: filebrowser-config
+          - name: filebrowser-cups-config
             mountPath: /config
       
       volumes:
       - name: pdf-output
         persistentVolumeClaim:
           claimName: cups-pdf-output-pvc
-      - name: filebrowser-database
+      - name: filebrowser-cups-database
         persistentVolumeClaim:
-          claimName: filebrowser-database-pvc
-      - name: filebrowser-config
+          claimName: filebrowser-cups-database-pvc
+      - name: filebrowser-cups-config
         persistentVolumeClaim:
-          claimName: filebrowser-config-pvc
+          claimName: filebrowser-cups-config-pvc
 
 ---
 apiVersion: v1
