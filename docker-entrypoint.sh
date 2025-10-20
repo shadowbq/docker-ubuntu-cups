@@ -56,7 +56,7 @@ sleep 2
 
 # Start Avahi daemon for AirPrint/mDNS support
 echo "Starting Avahi daemon for AirPrint support..."
-avahi-daemon --daemonize --no-chroot
+avahi-daemon --daemonize --no-chroot --no-drop-root
 
 # Wait a moment for Avahi to initialize
 sleep 2
