@@ -42,6 +42,11 @@ if [[ ${1:-} == /* ]]; then
     exec "$@"
 fi
 
+# Start D-Bus for Avahi communication
+echo "Starting D-Bus daemon..."
+mkdir -p /var/run/dbus
+dbus-daemon --system --fork
+
 # Start Avahi daemon for AirPrint/mDNS support
 echo "Starting Avahi daemon for AirPrint support..."
 avahi-daemon --daemonize --no-chroot

@@ -17,6 +17,7 @@ RUN apt-get update -qq && \
         printer-driver-cups-pdf \
         avahi-daemon \
         avahi-utils \
+        dbus \
         ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
